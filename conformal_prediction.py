@@ -16,11 +16,24 @@ def adaptive_conformal_score(logits: torch.Tensor) -> torch.Tensor:
     softmax = torch.nn.functional.softmax(logits, dim=1)
     sorted_softmax, indices = torch.sort(softmax, descending=True, dim=1)
     cumsum = torch.cumsum(sorted_softmax, dim=1)
-    
+
     # Use the original indices to put the scores back in the original order
     reordered_scores = cumsum.gather(1, indices)
-    
+
     return reordered_scores
+
+
+def softmax_conformal_score(logits: torch.Tensor) -> torch.Tensor:
+    """Get the minus softmax score
+
+    Args:
+        logits: The logits
+
+    Returns:
+        The minus softmax score
+    """
+    softmax = torch.nn.functional.softmax(logits, dim=1)
+    return 1 - softmax
 
 
 def predict_conformal_set(

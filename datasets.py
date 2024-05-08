@@ -6,7 +6,9 @@ from torchvision import datasets
 from torchvision.transforms import transforms
 
 
-def get_imagenet_dataset(data_dir: str, transform: transforms.Compose) -> datasets.ImageNet:
+def get_imagenet_dataset(
+    data_dir: str, transform: transforms.Compose
+) -> datasets.ImageNet:
     """Get the ImageNet dataset
 
     Args:
@@ -57,9 +59,10 @@ def get_class(data: Dataset | Subset, class_idx: int) -> Subset:
             for i, target in enumerate(data.dataset.targets)
             if target == class_idx and i in data.indices
         ]
+        return Subset(data.dataset, indices)
     else:
         indices = [i for i, target in enumerate(data.targets) if target == class_idx]
-    return Subset(data, indices)
+        return Subset(data, indices)
 
 
 def test_model(model: torch.nn.Module, data: DataLoader, device: torch.device) -> float:
