@@ -18,6 +18,7 @@ def unnormalize(img):
 def visualize_imagenet_images(
     dataset: torch.utils.data.Dataset | torch.utils.data.Subset,
     number_of_images: int = 10,
+    save_root: str = None,
 ) -> None:
     number_of_plots = ceil(number_of_images / 10)
 
@@ -42,6 +43,10 @@ def visualize_imagenet_images(
             ax.imshow(img)
             ax.axis("off")
 
+        if save_root:
+            Path(save_root).mkdir(parents=True, exist_ok=True)
+            fig.savefig(f"{save_root}/images_{plot_index}.png")
+
         fig.show()
 
 
@@ -50,7 +55,12 @@ def get_top_k(
 ) -> list[tuple[str, int]]:
     """Get the top k items from the counter."""
     top_k = [
-        (f"{name_mapping[label].split(',')[0]} [{label}]" if label in name_mapping else "EMPTY", value)
+        (
+            f"{name_mapping[label].split(',')[0]} [{label}]"
+            if label in name_mapping
+            else "EMPTY",
+            value,
+        )
         for label, value in counter.most_common(k)
     ]
     return top_k
@@ -63,23 +73,31 @@ def plot_top_k_predictions(
     model_name: str,
     class_idx: int,
     save_root: str = None,
+    dataset: torch.utils.data.Dataset | torch.utils.data.Subset = None,
 ):
     """Plot the top k predictions for each alpha value."""
-    _, axs = plt.subplots(1, len(counters), figsize=(4 * len(counters), 4))
-
-    for i, (alpha, counter) in enumerate(counters.items()):
-        labels, values = zip(*get_top_k(counter, k, name_mapping))
-        axs[i].bar(labels, values)
-        axs[i].set_title(f"Alpha: {alpha}")
-        axs[i].set_xticks(range(len(labels)))
-        axs[i].set_xticklabels(labels, rotation=90)
-
-    plt.suptitle(
-        f'Top {k} predictions for class "{name_mapping[class_idx]}" using {model_name}'
+    _, axs = plt.subplots(
+        len(counters), 1, figsize=(0.6 * len(counters), 1.5 * len(counters))
     )
 
+    for i, (alpha, counter) in enumerate(counters.items()):
+        labels, values = zip(*reversed(get_top_k(counter, k, name_mapping)))
+        axs[i].barh(labels, values)
+        axs[i].set_title(f"Alpha: {alpha}")
+        axs[i].set_yticks(range(len(labels)))
+        axs[i].set_yticklabels(labels)
+
+    plt.suptitle(f"top-{k}, cls: {class_idx}, model: {model_name}")
+    plt.tight_layout()
+
     if save_root:
-        Path(f"{save_root}/{name_mapping[class_idx]}").mkdir(parents=True, exist_ok=True)
-        plt.savefig(f"{save_root}/{name_mapping[class_idx]}/{model_name}.png")
+        root = f"{save_root}/{name_mapping[class_idx].split(',')[0]}_{class_idx}"
+        Path(root).mkdir(parents=True, exist_ok=True)
+        plt.savefig(f"{root}/{model_name}.png")
+
+        if dataset:
+            visualize_imagenet_images(
+                dataset, number_of_images=len(dataset), save_root=root
+            )
 
     plt.show()
