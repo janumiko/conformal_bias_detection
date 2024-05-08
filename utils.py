@@ -50,7 +50,7 @@ def get_top_k(
 ) -> list[tuple[str, int]]:
     """Get the top k items from the counter."""
     top_k = [
-        (name_mapping[label] if label in name_mapping else "EMPTY", value)
+        (f"{name_mapping[label].split(',')[0]} [{label}]" if label in name_mapping else "EMPTY", value)
         for label, value in counter.most_common(k)
     ]
     return top_k
@@ -77,9 +77,9 @@ def plot_top_k_predictions(
     plt.suptitle(
         f'Top {k} predictions for class "{name_mapping[class_idx]}" using {model_name}'
     )
-    
+
     if save_root:
-        Path(save_root).mkdir(parents=True, exist_ok=True)
-        plt.savefig(f"{save_root}/{model_name}_top_{k}_{name_mapping[class_idx]}.png")
+        Path(f"{save_root}/{name_mapping[class_idx]}").mkdir(parents=True, exist_ok=True)
+        plt.savefig(f"{save_root}/{name_mapping[class_idx]}/{model_name}.png")
 
     plt.show()
