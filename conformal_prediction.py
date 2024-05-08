@@ -1,7 +1,9 @@
-import torch
-from torch.utils.data import DataLoader
 from typing import Callable
+
+import numpy as np
+import torch
 import tqdm
+from torch.utils.data import DataLoader
 
 
 def adaptive_conformal_score(logits: torch.Tensor) -> torch.Tensor:
@@ -36,13 +38,30 @@ def softmax_conformal_score(logits: torch.Tensor) -> torch.Tensor:
     return 1 - softmax
 
 
+def calculate_thresholds(
+    scores: torch.Tensor, alpha: int, calibration_len: int
+) -> torch.Tensor:
+    """Calculate the thresholds for the scores
+    
+    Args:
+        scores: The scores
+        alpha: The alpha value
+        calibration_len: The length of the calibration set
+        
+    Returns:
+        The thresholds
+    """
+    q = np.ceil((calibration_len + 1) * (1 - alpha)) / calibration_len
+    return scores.quantile(q, interpolation="higher")
+
+
 def predict_conformal_set(
     model: torch.nn.Module,
     data: DataLoader,
     score_fn,
     threshold: torch.Tensor,
     device: torch.device = "cpu",
-) -> torch.Tensor:
+) -> list[list[int]]:
     """Get the conformal set for the data
 
     Args:
@@ -58,7 +77,7 @@ def predict_conformal_set(
     model.eval()
     with torch.no_grad():
         results = []
-        for inputs, _ in tqdm.tqdm(data):
+        for inputs, _ in data:
             inputs = inputs.to(device)
             logits = model(inputs)
             score = score_fn(logits)
@@ -67,7 +86,11 @@ def predict_conformal_set(
 
             for i in range(inputs.size(0)):
                 indices = torch.nonzero(score[i]).squeeze()
-                results.append(indices.cpu().numpy())
+
+                if indices.dim() == 0:
+                    results.append([indices.tolist()])
+                else:
+                    results.append(indices.tolist())
 
     return results
 
