@@ -43,22 +43,22 @@ def plot_experiment_results(
     for i, (alpha, counter) in enumerate(counters.items()):
         plot_predictions(
             axs[i, 0], counter, name_mapping_fn=name_mapping_fn, title=f"Alpha={alpha}"
-        )
+        )       
         plot_distances(
             axs[i, 1],
-            counter,
-            distances,
-            name_mapping_fn=name_mapping_fn,
-            title="L2 norm",
-        )
-        plot_distances(
-            axs[i, 2],
             counter,
             similarities,
             name_mapping_fn=name_mapping_fn,
             title="Cosine similarity",
         )
-
+        plot_distances(
+            axs[i, 2],
+            counter,
+            distances,
+            name_mapping_fn=name_mapping_fn,
+            title="L2 norm",
+        )
+        
     plt.tight_layout()
 
     # Save the plot if a save path is provided
