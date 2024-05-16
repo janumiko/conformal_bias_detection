@@ -1,7 +1,5 @@
-import torch
-import tqdm
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import Dataset, Subset
 from torchvision import datasets
 from torchvision.transforms import transforms
 
@@ -63,27 +61,3 @@ def get_class(data: Dataset | Subset, class_idx: int) -> Subset:
     else:
         indices = [i for i, target in enumerate(data.targets) if target == class_idx]
         return Subset(data, indices)
-
-
-def test_model(model: torch.nn.Module, data: DataLoader, device: torch.device) -> float:
-    """Test the model on the data
-
-    Args:
-        model: The model to test
-        data: The data to test on
-        device: The device to use
-
-    Returns:
-        The accuracy of the model
-    """
-    model.eval()
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for inputs, targets in tqdm.tqdm(data):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += targets.size(0)
-            correct += (predicted == targets).sum().item()
-    return correct / total
