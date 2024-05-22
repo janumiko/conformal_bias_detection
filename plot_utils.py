@@ -2,11 +2,12 @@ from collections import Counter
 from math import ceil
 from pathlib import Path
 from typing import Callable
-
+from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset, Subset
 
+from constants import IMAGENET_CLASSES_DICT
 from utils import (
     calculate_cosine_similarity,
     calculate_distances,
@@ -43,7 +44,7 @@ def plot_experiment_results(
     for i, (alpha, counter) in enumerate(counters.items()):
         plot_predictions(
             axs[i, 0], counter, name_mapping_fn=name_mapping_fn, title=f"Alpha={alpha}"
-        )       
+        )
         plot_distances(
             axs[i, 1],
             counter,
@@ -58,7 +59,7 @@ def plot_experiment_results(
             name_mapping_fn=name_mapping_fn,
             title="L2 norm",
         )
-        
+
     plt.tight_layout()
 
     # Save the plot if a save path is provided
@@ -176,3 +177,50 @@ def plot_distances(
 
     if title:
         subplot.set_title(title)
+
+
+def plot_classes_tsne(
+    class_latent_vectors: dict[int, torch.Tensor],
+    save_path: str = None,
+    fig_size: tuple[int, int] = (10, 10),
+    dimension: int = 2,
+    label_dict: dict[int, str] = IMAGENET_CLASSES_DICT,
+) -> None:
+    """Plot the classes in a t-SNE plot.
+
+    Args:
+        class_latent_vectors (dict[int, Tensor]): The latent vectors of the classes
+        save_path (Optional[str]): The path to save the plot
+        fig_size (tuple[int, int]): The size of the figure
+        dimension (int): The dimension of the t-SNE plot
+    """
+    # Get the number of the latent vectors for each class
+    class_latent_vec_count = {
+        key: value.shape[0] for key, value in class_latent_vectors.items()
+    }
+
+    # Concatenate all the latent vectors
+    X = torch.cat([value for value in class_latent_vectors.values()])
+
+    # Perform t-SNE
+    X_embedded = TSNE(n_components=dimension).fit_transform(X)
+
+    # Plot the results
+    fig, ax = plt.subplots(figsize=fig_size)
+    start = 0
+    for i, (key, count) in enumerate(class_latent_vec_count.items()):
+        end = start + count
+        ax.scatter(
+            X_embedded[start:end, 0],
+            X_embedded[start:end, 1],
+            label=label_dict[key].split(",")[0],
+        )
+        start = end
+
+    ax.legend()
+
+    if save_path:
+        Path(save_path).mkdir(parents=True, exist_ok=True)
+        fig.savefig(f"{save_path}/tsne.png")
+
+    plt.show()
