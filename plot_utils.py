@@ -181,6 +181,7 @@ def plot_distances(
 
 def plot_classes_tsne(
     class_latent_vectors: dict[int, torch.Tensor],
+    title: str = None,
     save_path: str = None,
     fig_size: tuple[int, int] = (10, 10),
     dimension: int = 2,
@@ -190,6 +191,7 @@ def plot_classes_tsne(
 
     Args:
         class_latent_vectors (dict[int, Tensor]): The latent vectors of the classes
+        title (Optional[str]): The title of the plot
         save_path (Optional[str]): The path to save the plot
         fig_size (tuple[int, int]): The size of the figure
         dimension (int): The dimension of the t-SNE plot
@@ -218,6 +220,9 @@ def plot_classes_tsne(
         start = end
 
     ax.legend()
+
+    if title:
+        ax.set_title(title)
 
     if save_path:
         Path(save_path).mkdir(parents=True, exist_ok=True)

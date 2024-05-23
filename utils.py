@@ -4,6 +4,8 @@ import numpy as np
 import torch
 
 from constants import IMAGENET_CLASSES_DICT
+# ImageClassification
+from torchvision.models import ResNet18_Weights
 
 
 def unnormalize(img: torch.Tensor) -> np.ndarray:
@@ -87,14 +89,15 @@ def name_mapping_fn(label: int) -> str:
     return f"{IMAGENET_CLASSES_DICT[label].split(',')[0]} [{label}]"
 
 
-def get_top_k(counter: Counter, k: int) -> Counter:
+def get_top_k(counter: Counter, k: int, scale: int = 1) -> Counter:
     """Get the top k items from the counter.
 
     Args:
         counter: The counter to get the top k items from
         k: The number of items to get
+        scale: The scale to divide by
 
     Returns:
         The top k items from the counter
     """
-    return Counter({label: value for label, value in counter.most_common(k)})
+    return Counter({label: value / scale for label, value in counter.most_common(k)})
